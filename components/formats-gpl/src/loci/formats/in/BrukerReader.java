@@ -186,7 +186,7 @@ public class BrukerReader extends FormatReader {
 
     ArrayList<String> acqpFiles = new ArrayList<String>();
     ArrayList<String> recoFiles = new ArrayList<String>();
-
+    
     for (String f : acquisitionDirs) {
       Location dir = new Location(parent, f);
       if (dir.isDirectory()) {
@@ -233,6 +233,7 @@ public class BrukerReader extends FormatReader {
     String[] timestamps = new String[pixelsFiles.size()];
     String[] institutions = new String[pixelsFiles.size()];
     String[] users = new String[pixelsFiles.size()];
+    float paravisionVersion = 0;    
 
     core.clear();
     for (int series=0; series<pixelsFiles.size(); series++) {
@@ -270,6 +271,10 @@ public class BrukerReader extends FormatReader {
 
           addSeriesMeta(key.substring(3), value);
 
+          if (key.equals("##$ACQ_sw_version")) {
+            String numeric = value.replaceAll("[^0-9\\.]+", "");
+            paravisionVersion = Float.parseFloat(numeric);
+          }          
           if (key.equals("##$NI")) {
             ni = Integer.parseInt(value);
           }
@@ -343,6 +348,13 @@ public class BrukerReader extends FormatReader {
       int ys = sizes.length > 1 ? Integer.parseInt(sizes[1]) : 0;
       int zs = sizes.length > 2 ? Integer.parseInt(sizes[2]) : 0;
 
+      // ParaVision 6.0+ hack (switch x size with y size)
+      if (paravisionVersion >= 6.0) {
+          int tmp = td;
+          td = ys;
+          ys = tmp;          
+      }
+      
       if (sizes.length == 2) {
         if (ni == 1) {
           ms.sizeY = ys;
